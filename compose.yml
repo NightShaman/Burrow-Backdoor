@@ -1,0 +1,14 @@
+services:
+  burrow-backdoor:
+    build: .
+    image: burrow-backdoor:local
+    container_name: burrow-backdoor
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:8080:8080"
+    environment:
+      BURROW_BASE_URL: ${BURROW_BASE_URL:?Set BURROW_BASE_URL}
+      BURROW_API_TOKEN: ${BURROW_API_TOKEN:?Set BURROW_API_TOKEN}
+      HOST: 0.0.0.0
+      PORT: "8080"
+      MCP_PATH: /mcp
