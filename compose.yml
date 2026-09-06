@@ -1,7 +1,6 @@
 services:
   burrow-backdoor:
-    build: .
-    image: burrow-backdoor:local
+    image: ghcr.io/nightshaman/burrow-backdoor:latest
     container_name: burrow-backdoor
     restart: unless-stopped
     ports:
