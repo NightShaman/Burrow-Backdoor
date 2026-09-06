@@ -55,7 +55,7 @@ jobs:
           docker run -d --name backdoor-smoke -p 127.0.0.1:8080:8080 \
             -e BURROW_BASE_URL=http://127.0.0.1:42817 \
             -e BURROW_API_TOKEN=ci-placeholder-not-a-secret burrow-backdoor:verify
-          curl --fail --retry 15 --retry-connrefused --retry-delay 2 http://127.0.0.1:8080/healthz
+          curl --fail --retry 15 --retry-all-errors --retry-delay 2 --max-time 5 --retry-max-time 60 http://127.0.0.1:8080/healthz
       - name: Publish verified image
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         env:
