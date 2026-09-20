@@ -5,6 +5,9 @@ test('mod diagnostic tools use dedicated paths and read-only annotation', async 
   const tools = new Map(); const paths = [];
   registerDiagnosticTools({ registerTool(name, config, call) { tools.set(name, { config, call }); } }, { get: async (path, query) => { paths.push([path, query]); return { ok: true }; } });
   for (const name of ['burrow_list_mods', 'burrow_list_mod_jobs', 'burrow_get_mod_job', 'burrow_mod_pending_operations']) assert.equal(tools.get(name).config.annotations.readOnlyHint, true);
+  assert.match(tools.get('burrow_list_mods').config.description, /versions/);
+  assert.match(tools.get('burrow_mod_pending_operations').config.description, /all current/);
+  assert.equal(tools.get('burrow_mod_pending_operations').config.inputSchema.modId.safeParse('bad--id').success, false);
   await tools.get('burrow_list_mods').call({});
   await tools.get('burrow_list_mod_jobs').call({ modId: 'some-mod', cursor: '50', limit: 50 });
   await tools.get('burrow_mod_pending_operations').call({ modId: 'some-mod' });

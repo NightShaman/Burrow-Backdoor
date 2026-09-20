@@ -69,4 +69,4 @@ must authenticate to GHCR with a credential permitted to read the package
 (`read:packages`). CI never needs a real Burrow API token: the health smoke test
 uses a dummy value and makes no authenticated calls to Burrow.
 
-Mod diagnostics use dedicated Core GET endpoints, never arbitrary mod GET routes. Unsupported, disabled, and unavailable adapters are distinguished from an empty supported job page. Pages are bounded to 100 records; follow `nextCursor` to traverse further. Progress counters indicate recorded work, not proof that a running operation is advancing.
+Mod diagnostics use dedicated Core GET endpoints, never arbitrary mod GET routes. Unsupported, disabled, and unavailable adapters are distinguished from an empty supported job page. Pages are bounded to 100 records; follow `nextCursor` to traverse further. Pending operations return all current Core-hosted capability requests; they are observations, not liveness. Progress counters indicate recorded work, not proof that a running operation is advancing.
