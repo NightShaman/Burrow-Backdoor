@@ -6,7 +6,7 @@ It does not read Burrow's SQLite databases or runtime files directly. Burrow Cor
 
 ## Initial tools
 
-- `burrow_list_mods`, `burrow_list_mod_jobs`, `burrow_get_mod_job` (Core opt-in sanitized diagnostics only)
+- `burrow_list_mods`, `burrow_list_mod_jobs`, `burrow_get_mod_job`, `burrow_mod_pending_operations` (Core opt-in sanitized diagnostics only)
 - `burrow_health`
 - `burrow_list_agents`
 - `burrow_agent_status`

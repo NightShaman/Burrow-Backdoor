@@ -10,6 +10,7 @@ export function registerDiagnosticTools(server, client) {
 
   add('burrow_list_mods', 'List mod availability and diagnostic support.', {}, () => client.get('/api/diagnostics/mods'));
   add('burrow_list_mod_jobs', 'List opt-in sanitized mod jobs, with continuation cursor.', { modId: z.string().regex(/^[a-z0-9-]+$/), limit: z.number().int().min(1).max(100).optional(), cursor: z.string().max(256).optional() }, ({ modId, ...q }) => client.get(`/api/diagnostics/mods/${encodeURIComponent(modId)}/jobs`, q));
+  add('burrow_mod_pending_operations', 'Read current bounded Core-hosted mod capability operations and elapsed time (not proof of progress).', { modId: z.string().regex(/^[a-z0-9-]+$/) }, ({ modId }) => client.get(`/api/diagnostics/mods/${encodeURIComponent(modId)}/pending`));
   add('burrow_get_mod_job', 'Inspect one sanitized mod job.', { modId: z.string().regex(/^[a-z0-9-]+$/), jobId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/) }, ({ modId, jobId }) => client.get(`/api/diagnostics/mods/${encodeURIComponent(modId)}/jobs/${encodeURIComponent(jobId)}`));
   add('burrow_health', 'Read Burrow runtime health and host/configuration status.', {}, () => client.get('/api/health'));
   add('burrow_list_agents', 'List Burrow agents and their execution-environment assignments.', { includeDisabled: z.boolean().optional() }, ({ includeDisabled }) => client.get('/api/agents', { includeDisabled }));
