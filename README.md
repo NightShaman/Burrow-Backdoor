@@ -6,6 +6,7 @@ It does not read Burrow's SQLite databases or runtime files directly. Burrow Cor
 
 ## Initial tools
 
+- `burrow_list_mods`, `burrow_list_mod_jobs`, `burrow_get_mod_job` (Core opt-in sanitized diagnostics only)
 - `burrow_health`
 - `burrow_list_agents`
 - `burrow_agent_status`
@@ -67,3 +68,5 @@ The repository is private. Keep its GHCR package private too; deployment hosts
 must authenticate to GHCR with a credential permitted to read the package
 (`read:packages`). CI never needs a real Burrow API token: the health smoke test
 uses a dummy value and makes no authenticated calls to Burrow.
+
+Mod diagnostics use dedicated Core GET endpoints, never arbitrary mod GET routes. Unsupported, disabled, and unavailable adapters are distinguished from an empty supported job page. Pages are bounded to 100 records; follow `nextCursor` to traverse further. Progress counters indicate recorded work, not proof that a running operation is advancing.
