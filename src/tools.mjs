@@ -8,6 +8,11 @@ export function registerDiagnosticTools(server, client) {
     try { return text(await handler(input || {})); } catch (error) { return fail(error); }
   });
 
+  add('burrow_postgres_status', 'Read PostgreSQL connectivity, server major and pgvector availability (no connection details).', {}, () => client.get('/api/diagnostics/postgres'));
+  add('burrow_list_forge_jobs', 'List sanitized Forge job status summaries with continuation cursor; excludes prompts, artifacts and provider errors.', { limit: z.number().int().min(1).max(100).optional(), cursor: z.string().regex(/^[1-9]\d*$/).optional() }, (q) => client.get('/api/diagnostics/forge/jobs', q));
+  add('burrow_get_forge_job', 'Read sanitized Forge job status, mode, timestamps and artifact count only.', { jobId: z.string().uuid() }, ({ jobId }) => client.get(`/api/diagnostics/forge/jobs/${encodeURIComponent(jobId)}`));
+  add('burrow_inventory', 'Read safe count-only inventory of configured MCP connections and installed/enabled mods.', {}, () => client.get('/api/diagnostics/inventory'));
+  add('burrow_metrics', 'Read host process, filesystem and load metrics.', {}, () => client.get('/api/metrics'));
   add('burrow_list_mods', 'List installed mod names, versions when available, lifecycle status and diagnostic support.', {}, () => client.get('/api/diagnostics/mods'));
   add('burrow_list_mod_jobs', 'List opt-in sanitized mod jobs, with continuation cursor.', { modId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), limit: z.number().int().min(1).max(100).optional(), cursor: z.string().max(256).optional() }, ({ modId, ...q }) => client.get(`/api/diagnostics/mods/${encodeURIComponent(modId)}/jobs`, q));
   add('burrow_mod_pending_operations', 'Read all current Core-hosted mod capability operations and elapsed time (not proof of progress).', { modId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/) }, ({ modId }) => client.get(`/api/diagnostics/mods/${encodeURIComponent(modId)}/pending`));

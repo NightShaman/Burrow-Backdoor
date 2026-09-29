@@ -14,3 +14,14 @@ test('mod diagnostic tools use dedicated paths and read-only annotation', async 
   await tools.get('burrow_get_mod_job').call({ modId: 'some-mod', jobId: 'job_1' });
   assert.deepEqual(paths, [['/api/diagnostics/mods', undefined], ['/api/diagnostics/mods/some-mod/jobs', { cursor: '50', limit: 50 }], ['/api/diagnostics/mods/some-mod/pending', undefined], ['/api/diagnostics/mods/some-mod/jobs/job_1', undefined]]);
 });
+test('Forge, inventory and PostgreSQL tools use sanitized diagnostics paths', async () => {
+  const tools = new Map(), paths = [];
+  registerDiagnosticTools({ registerTool(name, config, call) { tools.set(name, { config, call }); } }, { get: async (path, query) => { paths.push([path, query]); return { ok: true }; } });
+  for (const name of ['burrow_postgres_status', 'burrow_list_forge_jobs', 'burrow_get_forge_job', 'burrow_inventory', 'burrow_metrics']) assert.equal(tools.get(name).config.annotations.readOnlyHint, true);
+  await tools.get('burrow_postgres_status').call({});
+  await tools.get('burrow_list_forge_jobs').call({ cursor: '42', limit: 25 });
+  await tools.get('burrow_get_forge_job').call({ jobId: 'aaaa0000-0000-4000-8000-000000000001' });
+  await tools.get('burrow_inventory').call({});
+  await tools.get('burrow_metrics').call({});
+  assert.deepEqual(paths, [['/api/diagnostics/postgres', undefined], ['/api/diagnostics/forge/jobs', { cursor: '42', limit: 25 }], ['/api/diagnostics/forge/jobs/aaaa0000-0000-4000-8000-000000000001', undefined], ['/api/diagnostics/inventory', undefined], ['/api/metrics', undefined]]);
+});

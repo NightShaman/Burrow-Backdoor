@@ -2,10 +2,11 @@
 
 Burrow-Backdoor is a **read-only diagnostic MCP server** for tracing problems through Burrow's own authenticated HTTP API.
 
-It does not read Burrow's SQLite databases or runtime files directly. Burrow Core remains authoritative. Despite the suspicious name, this is not an authentication bypass.
+It does not read Burrow's PostgreSQL databases, mod-owned SQLite databases or runtime files directly. Burrow Core remains authoritative. Despite the suspicious name, this is not an authentication bypass.
 
 ## Initial tools
 
+- `burrow_postgres_status`, `burrow_list_forge_jobs`, `burrow_get_forge_job`, `burrow_inventory`, `burrow_metrics`
 - `burrow_list_mods`, `burrow_list_mod_jobs`, `burrow_get_mod_job`, `burrow_mod_pending_operations` (Core opt-in sanitized diagnostics only)
 - `burrow_health`
 - `burrow_list_agents`
@@ -70,3 +71,5 @@ must authenticate to GHCR with a credential permitted to read the package
 uses a dummy value and makes no authenticated calls to Burrow.
 
 Mod diagnostics use dedicated Core GET endpoints, never arbitrary mod GET routes. Unsupported, disabled, and unavailable adapters are distinguished from an empty supported job page. Pages are bounded to 100 records; follow `nextCursor` to traverse further. Pending operations return all current Core-hosted capability requests; they are observations, not liveness. Progress counters indicate recorded work, not proof that a running operation is advancing.
+
+Forge diagnostics include only job ID, mode, status, timestamps, and artifact count; prompts, model settings, provider errors, and artifact URLs are deliberately excluded. PostgreSQL diagnostics expose connectivity, server major and pgvector presence only. Core must include the corresponding diagnostics endpoints; older Core versions return `403 api_token_forbidden` for the new tools. No direct DB access or PostgreSQL credentials are needed.
