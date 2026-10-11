@@ -4,8 +4,9 @@ Burrow-Backdoor is a **read-only diagnostic MCP server** for tracing problems th
 
 It does not read Burrow's PostgreSQL databases, mod-owned SQLite databases or runtime files directly. Burrow Core remains authoritative. Despite the suspicious name, this is not an authentication bypass.
 
-## Initial tools
+## Tools
 
+- `burrow_brains_status`, `burrow_list_brain_memories`, `burrow_list_brain_embedding_jobs`
 - `burrow_postgres_status`, `burrow_list_forge_jobs`, `burrow_get_forge_job`, `burrow_inventory`, `burrow_metrics`
 - `burrow_list_mods`, `burrow_list_mod_jobs`, `burrow_get_mod_job`, `burrow_mod_pending_operations` (Core opt-in sanitized diagnostics only)
 - `burrow_health`
@@ -73,3 +74,24 @@ uses a dummy value and makes no authenticated calls to Burrow.
 Mod diagnostics use dedicated Core GET endpoints, never arbitrary mod GET routes. Unsupported, disabled, and unavailable adapters are distinguished from an empty supported job page. Pages are bounded to 100 records; follow `nextCursor` to traverse further. Pending operations return all current Core-hosted capability requests; they are observations, not liveness. Progress counters indicate recorded work, not proof that a running operation is advancing.
 
 Forge diagnostics include only job ID, mode, status, timestamps, and artifact count; prompts, model settings, provider errors, and artifact URLs are deliberately excluded. PostgreSQL diagnostics expose connectivity, server major and pgvector presence only. Core must include the corresponding diagnostics endpoints; older Core versions return `403 api_token_forbidden` for the new tools. No direct DB access or PostgreSQL credentials are needed.
+
+## Brains diagnostics
+
+Requires a Core release providing `/api/diagnostics/brains`, `/memories`, and
+`/embedding-jobs`. Older releases report `403 api_token_forbidden`; this is not an
+empty result or a reason to widen the token scope. The existing `diagnostics:read`
+token remains sufficient once Core is updated.
+
+`burrow_brains_status` reports global or agent-scoped saved-memory counts plus
+embedding enabled/configured state, generation and indexed/pending/failed counts.
+Counts are decimal strings. Embedding settings are global; an agent filter scopes
+the counts, not the configuration. Metadata listing requires `agentId`, includes
+soft-deleted and migrated records, and never returns titles, memory text, actual
+source references, legacy snapshots or vectors. Job listing shows revision,
+attempts, next retry and allowlisted error codes, not provider error payloads.
+
+Lists default to 50; any positive safe-integer page size is supported. Follow
+`nextCursor` until null. Cursors are bound to route and agent scope; changing
+scope requires restarting pagination. These are keyset pages, not snapshots
+across concurrent changes. Diagnostic reads do not reconcile settings, reindex,
+make paid embedding calls or mutate saved memories.
