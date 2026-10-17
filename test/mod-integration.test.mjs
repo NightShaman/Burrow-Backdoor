@@ -1,14 +1,16 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mkdtemp, mkdir, cp, rm } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const core = path.resolve(process.env.BURROW_CORE_ROOT || fileURLToPath(new URL('../../../Burrow-HC/Burrow-Backend/', import.meta.url)));
-const { loadMods, cleanupMods, createModRoute } = await import(`${core}/src/mod-runtime.mjs`);
+const runtimePath = path.join(core, 'src', 'mod-runtime.mjs');
 
-test('actual Core loads Backdoor as globally available caller-scoped mod tools', async (t) => {
+test('actual Core loads Backdoor as globally available caller-scoped mod tools', { skip: !existsSync(runtimePath) && `Burrow Core checkout unavailable at ${core}` }, async (t) => {
+  const { loadMods, cleanupMods, createModRoute } = await import(runtimePath);
   const root = await mkdtemp(path.join(os.tmpdir(), 'backdoor-mod-'));
   const modRoot = path.join(root, 'mods', 'burrow-backdoor');
   await mkdir(modRoot, { recursive: true });
