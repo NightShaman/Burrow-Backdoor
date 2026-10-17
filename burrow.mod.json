@@ -1,0 +1,24 @@
+{
+  "id": "burrow-backdoor",
+  "name": "Burrow Backdoor",
+  "version": "0.2.0",
+  "server": "src/server.mjs",
+  "ui": {
+    "settings": "ui/settings.js"
+  },
+  "contributions": {
+    "settings": [
+      {
+        "id": "burrow-backdoor",
+        "navigation": {
+          "title": "Burrow Backdoor",
+          "description": "Assign global read-only diagnostic scope."
+        },
+        "primary": {
+          "title": "Burrow Backdoor",
+          "capability": "settingsUi"
+        }
+      }
+    ]
+  }
+}
