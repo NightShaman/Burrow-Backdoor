@@ -2,7 +2,7 @@
   "id": "burrow-backdoor",
   "name": "Burrow Backdoor",
   "version": "0.2.0",
-  "server": "src/server.mjs",
+  "server": "src/mod.mjs",
   "ui": {
     "settings": "ui/settings.js"
   },

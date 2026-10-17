@@ -1,10 +1,12 @@
 {
   "name": "burrow-backdoor",
-  "version": "0.2.0",
-  "private": true,
+  "version": "0.3.0",
+  "private": false,
   "type": "module",
-  "description": "Read-only diagnostic MCP for Burrow",
+  "description": "Read-only diagnostic mod for Burrow",
   "license": "UNLICENSED",
-  "scripts": { "start": "node src/server.mjs", "test": "node --test", "check": "node --check src/*.mjs && node --test" },
-  "dependencies": { "@modelcontextprotocol/sdk": "1.30.0", "zod": "^3.24.2" }
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/*.mjs && node --test"
+  }
 }

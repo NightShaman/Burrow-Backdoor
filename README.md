@@ -6,93 +6,24 @@
 
 *Sometimes we have to enter from the rear.*
 
-Burrow Backdoor gives an MCP client a read-only view into a running Burrow installation. Use it to investigate an agent that looks stuck, follow a run through its traces, check saved-memory indexing, or see what Core knows about a mod's work.
+Burrow Backdoor is an installable Burrow mod that gives every agent read-only diagnostic tools without creating a separate MCP connection or API token. Core owns the data, caller identity, scope enforcement, and redaction; the mod maps those approved diagnostics into a mod-managed MCP provider.
 
-It runs as a separate service and talks to Burrow's authenticated HTTP API. Core owns the data, permissions, and diagnostic redaction. Backdoor does not open Burrow's databases or runtime files, and it cannot repair, cancel, or restart work.
+## Install
 
-## Before you start
+1. Open **Settings → Mods** in Burrow.
+2. Add the Backdoor repository as a mod source.
+3. Refresh the source and install **Burrow Backdoor**.
+4. Explicitly enable the mod. Newly installed mods remain disabled by design.
 
-You need:
+Once enabled, Burrow registers the provider as **Mod: Burrow Backdoor** with 26 read-only tools. The tools are available to all agents without per-tool grants.
 
-- A running Burrow Core with API tokens and the diagnostics endpoints you want to use. Newer tools need matching Core support; an older Core may reject them.
-- A Core-issued token with the `diagnostics:read` scope.
-- Network access from Backdoor to your Burrow HTTP origin.
-- Docker with Docker Compose, or Node.js 24.x for a source installation.
-- An MCP client that supports **Streamable HTTP**.
+## Access model
 
-**Protect the MCP endpoint before starting it.** Backdoor has no built-in client authentication or TLS. Anyone who can reach it can use its configured Core token indirectly through the diagnostic tools. The supplied Compose file publishes port 8080 on every host interface. Start with loopback access, or put it behind an authenticated TLS proxy and prevent clients from reaching the raw port.
+Every agent can inspect its own sessions, runs, traces, context, saved-memory metadata, and other agent-owned diagnostic records. Model-supplied `agentId` values never establish authority; Core binds each call to the trusted calling agent.
 
-## Install and connect
+In **Settings → Burrow Backdoor → Agent access**, the operator may select agents that need global diagnostic scope. Selected agents can inspect other agents and installation-wide diagnostic records such as Forge and mod jobs. Unselected agents remain own-scope.
 
-### 1. Create a diagnostic token
-
-In Burrow, open **Settings → Connections → API tokens**. Give the token a recognizable name, choose an expiry if needed, and select **Create API token**. The scope is `diagnostics:read`.
-
-Copy the token when it is shown. Burrow only reveals the plaintext at creation. Keep it out of Git, screenshots, client prompts, and support reports.
-
-### 2. Configure Backdoor
-
-From a checkout of this repository:
-
-```sh
-cp .env.example .env
-chmod 600 .env
-```
-
-Edit `.env` and set:
-
-- `BURROW_BASE_URL` to your Burrow origin, including scheme and port, without an `/api` suffix.
-- `BURROW_API_TOKEN` to the token you just created.
-
-The example `http://burrow:42817` only works when that hostname resolves from Backdoor. The supplied Compose file does not join an existing Burrow network automatically. Use an address reachable from the container, or deliberately configure a shared Docker network. Inside a container, `127.0.0.1` refers to that container, not your host or another container.
-
-Use HTTPS between machines unless the connection is protected by a trusted private network or tunnel.
-
-### 3. Start with Docker Compose
-
-Before starting, edit the port mapping in `compose.yml` from `0.0.0.0:8080:8080` to:
-
-```yaml
-      - "127.0.0.1:8080:8080"
-```
-
-This keeps the host port local. It is suitable for an MCP client on the same host or a deliberately configured local proxy/tunnel. Remote clients need a protected route to the service; do not simply open the raw port to the Internet.
-
-The supplied Compose file pulls `ghcr.io/nightshaman/burrow-backdoor:latest`. If that package is private, authenticate Docker to GHCR with a credential permitted to read it before pulling. Public source visibility does not automatically make the container package public.
-
-```sh
-docker compose pull
-docker compose up -d
-curl -fsS http://127.0.0.1:8080/healthz
-```
-
-`/healthz` checks the Backdoor process only. It does **not** verify your Core address, token, or diagnostics access.
-
-### 4. Connect your MCP client
-
-Add a **Streamable HTTP** server using `http://127.0.0.1:8080/mcp` for a client on the same host. For a remote client, use your protected proxy or tunnel address instead. There is no stdio transport in this implementation.
-
-The Core token belongs in Backdoor's environment. It is not an MCP client password; any client authentication must be enforced by your proxy or network boundary.
-
-Refresh the client's tools, then call `burrow_health`. A successful response checks the full client → Backdoor → Core path. There are currently 26 tools.
-
-For a first investigation, ask your client:
-
-> Check Burrow health and list its agents. For the agent I select, show active runs and recent sessions, then inspect the relevant trace without including tool output.
-
-IDs returned by the list tools can be used in the corresponding detail tools. Treat the results as private operational data.
-
-### Run from source instead
-
-Use Node.js 24.x, as used by the container and CI. After configuring `.env`, change its `HOST` to `127.0.0.1` for local-only access:
-
-```sh
-npm ci --ignore-scripts --no-audit --no-fund
-npm run check
-node --env-file=.env src/server.mjs
-```
-
-`npm start` starts the server but does not load `.env` itself. Use it only when the required variables are already supplied by your process manager or shell.
+Backdoor is read-only, but diagnostic data can still be sensitive. Do not paste sessions, traces, context, or tool output into public reports without reviewing and redacting it.
 
 ## What you can inspect
 
@@ -119,73 +50,28 @@ Each tool is annotated read-only and uses a fixed Core GET route. The [tool defi
 
 ## Configuration
 
-| Variable | Required | Server default | Purpose |
-| --- | --- | --- | --- |
-| `BURROW_BASE_URL` | Yes | None | Burrow HTTP origin reachable from Backdoor |
-| `BURROW_API_TOKEN` | Yes | None | Core-issued `diagnostics:read` token |
-| `BURROW_REQUEST_TIMEOUT_MS` | No | `30000` | Positive integer timeout for each Backdoor → Core request |
-| `HOST` | No | `0.0.0.0` | Backdoor listener address |
-| `PORT` | No | `8080` | Backdoor listener port |
-| `MCP_PATH` | No | `/mcp` | Streamable HTTP endpoint path |
+Backdoor has no service URL, bearer token, listener, container, or proxy configuration in mod mode. Its only setting is the operator-managed list of agents granted global diagnostic scope. Disabling the mod removes the live provider while preserving its settings for re-enable.
 
-The supplied Compose file reads `BURROW_BASE_URL`, `BURROW_API_TOKEN`, and optional `BURROW_REQUEST_TIMEOUT_MS` from `.env`. It explicitly sets `HOST`, `PORT`, and `MCP_PATH`; changing those three values in `.env` alone will not change a Compose deployment. Edit the Compose configuration and port mapping together when needed. The process health endpoint remains `/healthz`.
+## Security boundary
 
-## Access and security
+- Every tool is registered as a mod-authorized, read-only tool.
+- Core supplies the trusted caller identity; tool arguments cannot impersonate another agent.
+- Ordinary callers default to their own agent and current session. Cross-agent requests are denied.
+- Installation-wide records without agent ownership require global diagnostic scope.
+- Backdoor receives no database credentials, model credentials, filesystem access, or arbitrary HTTP capability.
+- Disabling or unloading the mod revokes live tool routing immediately.
 
-Backdoor is for trusted operators and diagnostic clients. Its name is a joke, not an authentication bypass.
+## Development
 
-- Core enforces the token's `diagnostics:read` allowlist. It does not grant access to mutation, recovery, settings changes, cancellation, or mod lifecycle actions.
-- Backdoor forwards Core responses; redaction and data selection belong to Core. Do not assume every response is sanitized to the same degree as the dedicated Forge, mod, and Brains summaries.
-- Everyone allowed to use this Backdoor instance shares the diagnostic reach of its one Core token. There is no per-client or per-agent authorization layer here; an `agentId` filter is not an access restriction.
-- Protect both the token and the MCP endpoint. Use authenticated TLS for remote access and restrict the backend listener so it cannot bypass the proxy. TLS alone does not authenticate a client.
-- Backdoor needs no database credentials, database volumes, or Burrow runtime-directory mounts.
-
-To retire access, revoke the token in Burrow and stop the service or remove the client's route to it. To rotate a token, create a replacement, update `.env`, recreate the container with `docker compose up -d --force-recreate`, verify `burrow_health`, and revoke the old token.
-
-## Updates and troubleshooting
-
-For an image update:
+Use Node.js 24.x. Run:
 
 ```sh
-docker compose pull
-docker compose up -d
+npm ci --ignore-scripts --no-audit --no-fund
+npm run check
 ```
 
-Repeat both the `/healthz` check and an MCP `burrow_health` call. `latest` moves; pin the image in `compose.yml` to a published version, commit tag, or digest when you need reproducible deployments.
-
-Useful commands:
-
-```sh
-docker compose ps
-docker compose logs --tail=100 burrow-backdoor
-docker compose down
-```
-
-Review and redact logs before sharing them. Avoid pasting `.env` or rendered Compose configuration into a report because it can contain the token.
-
-| Symptom | Check |
-| --- | --- |
-| Image pull is denied | Verify the image reference, package availability, and GHCR read access. Repository and package visibility are separate. |
-| Startup reports a missing variable | Set both required variables in `.env` for Compose, or load/export them for a source run. |
-| `/healthz` works but tools fail | Check Core reachability from Backdoor, the token's validity/expiry, and Core endpoint support. Process health alone does not test those. |
-| `403 api_token_forbidden` | Check Core compatibility and the diagnostics allowlist. Older Core versions can reject newer tools; update Core rather than widening token access. |
-| `/mcp` returns “No valid session ID provided” | Use a Streamable HTTP MCP client that initializes a session. A plain browser request is not an MCP session. Reconnect after a restart. |
-| Empty or unavailable mod results | Check whether the mod is enabled and implements diagnostic adapters. Unsupported/unavailable is not evidence that there is no work. |
-
-For a useful bug report, include the Backdoor image tag or commit, Core version, tool name, redacted arguments, and exact error. Remove tokens, private conversation content, and sensitive tool output.
-
-## Development and publishing
-
-Run `npm run check` before submitting changes. It runs the source check command and Node's test suite, including a real MCP HTTP round trip against a fixture Core server. Tests do not need a real Burrow token or a running Burrow installation.
-
-The [container workflow](.github/workflows/container.yml) checks/tests the source, builds the container, and smoke-tests `/healthz` on pull requests and pushes to `main`. Successful non-PR runs on `main` publish to `ghcr.io/<repository-owner>/<repository-name>` in lowercase using `GITHUB_TOKEN`. Manual dispatch follows the same main-only publishing condition.
-
-Published tags are `latest`, `sha-<full commit>`, and a UTC calendar version of the form `YYYY.MM.DD.<GitHub run number>`. The workflow uses the standard Ubuntu runner and does not configure a multi-architecture build. The smoke test checks process health using a dummy token, not a live Core integration.
-
-The supplied Compose image reference currently points to NightShaman's package. A repository mirror or ownership change does not rewrite that reference or configure synchronization. Verify the intended image and package access before distributing deployment instructions.
-
-This README is maintained by hand alongside the implementation. Keep the setup, defaults, and tool descriptions in step with code changes.
+The mod manifest is `burrow.mod.json`; the server entry is `src/mod.mjs`; the operator settings UI is `ui/settings.js`. Core integration tests run against the sibling Burrow Backend checkout when available.
 
 ## License
 
-`package.json` currently declares `UNLICENSED`, and this repository has no license file. Public visibility alone does not grant an open-source license.
+See [`LICENSE`](LICENSE).
