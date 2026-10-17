@@ -71,7 +71,3 @@ npm run check
 ```
 
 The mod manifest is `burrow.mod.json`; the server entry is `src/mod.mjs`; the operator settings UI is `ui/settings.js`. Core integration tests run against the sibling Burrow Backend checkout when available.
-
-## License
-
-See [`LICENSE`](LICENSE).
