@@ -1,6 +1,6 @@
 {
   "name": "burrow-backdoor",
-  "version": "0.3.0",
+  "version": "2026.10.17",
   "private": false,
   "type": "module",
   "description": "Read-only diagnostic mod for Burrow",

@@ -71,3 +71,5 @@ npm run check
 ```
 
 The mod manifest is `burrow.mod.json`; the server entry is `src/mod.mjs`; the operator settings UI is `ui/settings.js`. Core integration tests run against the sibling Burrow Backend checkout when available.
+
+Releases use UTC calendar versions (`YYYY.MM.DD[.N]`). GitHub Actions assigns the next available revision on `main`, synchronizes the manifest/package release identity, tags it, and publishes the GitHub release.
