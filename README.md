@@ -1,4 +1,4 @@
-# Burrow Backdoor
+# Burrow Backdoor [Burrow MCP]
 
 *Sometimes we have to enter from the rear.*
 
