@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/hero.png" alt="Burrow Backdoor — read-only diagnostics for Burrow" width="720" />
+</p>
+
 # Burrow Backdoor [Burrow MCP]
 
 *Sometimes we have to enter from the rear.*
@@ -70,7 +74,7 @@ Add a **Streamable HTTP** server using `http://127.0.0.1:8080/mcp` for a client 
 
 The Core token belongs in Backdoor's environment. It is not an MCP client password; any client authentication must be enforced by your proxy or network boundary.
 
-Refresh the client's tools, then call `burrow_health`. A successful response checks the full client → Backdoor → Core path. There are currently 24 tools.
+Refresh the client's tools, then call `burrow_health`. A successful response checks the full client → Backdoor → Core path. There are currently 26 tools.
 
 For a first investigation, ask your client:
 
@@ -94,8 +98,8 @@ node --env-file=.env src/server.mjs
 
 | Area | Tools | What they provide |
 | --- | --- | --- |
-| Runtime | `burrow_health`, `burrow_metrics`, `burrow_inventory`, `burrow_postgres_status` | Health, host metrics, MCP/mod counts, and PostgreSQL connectivity/version/pgvector status |
-| Agents and sessions | `burrow_list_agents`, `burrow_agent_status`, `burrow_list_sessions`, `burrow_get_session`, `burrow_context_status` | Agent assignments, current state, recent conversations, and context/compression status |
+| Runtime | `burrow_health`, `burrow_runtime_status`, `burrow_metrics`, `burrow_inventory`, `burrow_postgres_status` | Health, release/configuration status, host metrics, MCP/mod counts, and PostgreSQL connectivity/version/pgvector status |
+| Agents and sessions | `burrow_list_agents`, `burrow_agent_status`, `burrow_list_sessions`, `burrow_get_session`, `burrow_get_session_context`, `burrow_context_status` | Agent assignments, current state, recent conversations, context composition, live usage, and compression status |
 | Runs and evidence | `burrow_active_runs`, `burrow_list_traces`, `burrow_get_trace`, `burrow_get_trace_authority`, `burrow_list_run_proofs`, `burrow_get_run_proof` | Active work, recorded traces, authority evidence, and archived runtime proofs |
 | Forge | `burrow_list_forge_jobs`, `burrow_get_forge_job` | Sanitized job status, mode, timestamps, and artifact count |
 | Mods | `burrow_list_mods`, `burrow_list_mod_jobs`, `burrow_get_mod_job`, `burrow_mod_pending_operations` | Mod lifecycle/diagnostic support, opt-in job summaries, and pending Core-hosted operations |
@@ -119,11 +123,12 @@ Each tool is annotated read-only and uses a fixed Core GET route. The [tool defi
 | --- | --- | --- | --- |
 | `BURROW_BASE_URL` | Yes | None | Burrow HTTP origin reachable from Backdoor |
 | `BURROW_API_TOKEN` | Yes | None | Core-issued `diagnostics:read` token |
+| `BURROW_REQUEST_TIMEOUT_MS` | No | `30000` | Positive integer timeout for each Backdoor → Core request |
 | `HOST` | No | `0.0.0.0` | Backdoor listener address |
 | `PORT` | No | `8080` | Backdoor listener port |
 | `MCP_PATH` | No | `/mcp` | Streamable HTTP endpoint path |
 
-The supplied Compose file reads only `BURROW_BASE_URL` and `BURROW_API_TOKEN` from `.env`. It explicitly sets `HOST`, `PORT`, and `MCP_PATH`; changing those three values in `.env` alone will not change a Compose deployment. Edit the Compose configuration and port mapping together when needed. The process health endpoint remains `/healthz`.
+The supplied Compose file reads `BURROW_BASE_URL`, `BURROW_API_TOKEN`, and optional `BURROW_REQUEST_TIMEOUT_MS` from `.env`. It explicitly sets `HOST`, `PORT`, and `MCP_PATH`; changing those three values in `.env` alone will not change a Compose deployment. Edit the Compose configuration and port mapping together when needed. The process health endpoint remains `/healthz`.
 
 ## Access and security
 

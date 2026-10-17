@@ -9,11 +9,12 @@ import { registerDiagnosticTools } from './tools.mjs';
 const host = process.env.HOST || '0.0.0.0';
 const port = Number(process.env.PORT || 8080);
 const mcpPath = process.env.MCP_PATH || '/mcp';
+const requestTimeoutMs = process.env.BURROW_REQUEST_TIMEOUT_MS || 30_000;
 const sessions = new Map();
-const client = new BurrowClient({ baseUrl: process.env.BURROW_BASE_URL, token: process.env.BURROW_API_TOKEN });
+const client = new BurrowClient({ baseUrl: process.env.BURROW_BASE_URL, token: process.env.BURROW_API_TOKEN, timeoutMs: Number(requestTimeoutMs) });
 
 async function createSession() {
-  const server = new McpServer({ name: 'Burrow-Backdoor', version: '0.1.0' });
+  const server = new McpServer({ name: 'Burrow-Backdoor', version: '0.2.0' });
   registerDiagnosticTools(server, client);
   let entry;
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: randomUUID, onsessioninitialized(id) { entry.sessionId = id; sessions.set(id, entry); } });

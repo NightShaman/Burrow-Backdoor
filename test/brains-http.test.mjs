@@ -24,7 +24,7 @@ test('Brains tools round-trip over actual MCP and authenticated Core HTTP transp
  client=new Client({name:'brains-test',version:'1'},{capabilities:{}});
  transport=new StreamableHTTPClientTransport(new URL(base+'/mcp'));await client.connect(transport);
 
- const catalog=await client.listTools();assert.equal(catalog.tools.length,24);
+ const catalog=await client.listTools();assert.equal(catalog.tools.length,26);
  const status=await client.callTool({name:'burrow_brains_status',arguments:{}});assert.equal(status.structuredContent.memories.active,'2');
  const first=await client.callTool({name:'burrow_list_brain_memories',arguments:{agentId:'a',limit:1}});assert.equal(first.structuredContent.nextCursor,'opaque-cursor');
  const second=await client.callTool({name:'burrow_list_brain_memories',arguments:{agentId:'a',limit:1,cursor:first.structuredContent.nextCursor}});assert.equal(second.structuredContent.nextCursor,null);
