@@ -2,7 +2,7 @@
   <img src="docs/assets/hero.png" alt="Burrow Backdoor — read-only diagnostics for Burrow" width="720" />
 </p>
 
-# Burrow Backdoor [Burrow MCP]
+# Burrow Backdoor [Burrow Mod]
 
 *Sometimes we have to enter from the rear.*
 
