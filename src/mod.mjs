@@ -52,7 +52,6 @@ const managementTools = [
 ];
 
 export function activate(context) {
-  if (!context.modManagement) throw new Error('mod_management_capability_required');
   for (const [name, description, inputSchema, operation] of diagnosticTools) context.tools.register({
     name, description, inputSchema, availability: 'mod-authorized',
     handler: (argumentsValue, caller) => context.runtimeDiagnostics.read({ ...allowlisted(argumentsValue, inputSchema), operation }, { signal: caller.signal }),

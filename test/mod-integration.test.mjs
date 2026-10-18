@@ -134,7 +134,7 @@ test('actual Core loads Backdoor with caller-scoped diagnostics and independentl
   assert.deepEqual([...settings], [['unrelated', { preserved: true }]]);
 });
 
-test('Backdoor refuses activation when its manifest omits the management declaration', { skip: !existsSync(runtimePath) && `Burrow Core checkout unavailable at ${core}` }, async (t) => {
+test('Backdoor remains diagnostic-only when Core does not grant its management capability', { skip: !existsSync(runtimePath) && `Burrow Core checkout unavailable at ${core}` }, async (t) => {
   const { loadMods, cleanupMods } = await import(runtimePath);
   const root = await mkdtemp(path.join(os.tmpdir(), 'backdoor-no-management-'));
   const modRoot = path.join(root, 'mods', 'burrow-backdoor');
@@ -142,11 +142,10 @@ test('Backdoor refuses activation when its manifest omits the management declara
   for (const entry of ['src', 'ui']) await cp(new URL(`../${entry}`, import.meta.url), path.join(modRoot, entry), { recursive: true });
   await cp(new URL('../burrow.mod.json', import.meta.url), path.join(modRoot, 'burrow.mod.json'));
   const manifest = JSON.parse(await (await import('node:fs/promises')).readFile(path.join(modRoot, 'burrow.mod.json'), 'utf8'));
-  delete manifest.system;
-  delete manifest.systemCapabilities;
   await (await import('node:fs/promises')).writeFile(path.join(modRoot, 'burrow.mod.json'), JSON.stringify(manifest));
-  const mods = await loadMods({ runtimeRoot: root, enabledModIds: async () => ['burrow-backdoor'], modStoreFactory: async () => ({ get: async (_name, fallback) => fallback, close: async () => {} }), modCatalogWriter: async () => {}, resolveAgentRuntime: async () => ({}), stores: { agents: {}, models: {}, scheduledJobs: {}, conversations: {} }, modAuthority: { read: async () => ({ grants: ['mod-management-v1'] }) }, logger: { warn() {}, error() {} } });
+  const mods = await loadMods({ runtimeRoot: root, enabledModIds: async () => ['burrow-backdoor'], modStoreFactory: async () => ({ get: async (_name, fallback) => fallback, close: async () => {} }), modCatalogWriter: async () => {}, resolveAgentRuntime: async () => ({}), stores: { agents: {}, models: {}, scheduledJobs: {}, conversations: {} }, runtimeDiagnostics: { read: async () => ({ ok: true }) }, modManagement: managementFixture([]), modAuthority: { read: async () => ({ grants: [] }), allowed: async () => false, assertAllowed: async () => { throw Error('mod_authority_forbidden'); } }, logger: { warn() {}, error() {} } });
   t.after(async () => { await cleanupMods(mods); await rm(root, { recursive: true, force: true }); });
-  assert.equal(mods[0].status, 'failed');
-  assert.match(mods[0].error, /mod_management_capability_required/);
+  assert.equal(mods[0].status, 'loaded', mods[0].error);
+  assert.equal(mods[0].tools.length, 34);
+  await assert.rejects(mods[0].host.invokeTool('burrow_mod_management_inventory', {}, { agentId: 'admin' }), /mod_route_failed/);
 });
