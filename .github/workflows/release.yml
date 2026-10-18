@@ -1,25 +1,27 @@
-name: Verify Burrow Backdoor
+name: Release Burrow Backdoor development package
 
 on:
   push:
     branches: [main]
-  pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: burrow-backdoor-verify-${{ github.ref }}
-  cancel-in-progress: true
+  group: burrow-backdoor-development-release
+  cancel-in-progress: false
 
 jobs:
-  verify:
+  release:
     runs-on: ubuntu-latest
     env:
       BURROW_CORE_ROOT: ${{ github.workspace }}/.core/Burrow-Backend
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
       - name: Checkout required Core integration target
         uses: actions/checkout@v4
         with:
@@ -34,7 +36,39 @@ jobs:
       - name: Install Core integration dependencies
         working-directory: .core/Burrow-Backend
         run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Verify source
+      - name: Fast development contract gate
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           npm run check
+      - name: Assign calendar version
+        id: version
+        run: |
+          set -eu
+          base=$(date -u +%Y.%m.%d)
+          version=$base
+          suffix=0
+          while git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null 2>&1; do
+            suffix=$((suffix + 1))
+            version="$base.$suffix"
+          done
+          node scripts/set-release-version.mjs "$version"
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+      - name: Verify development package identity
+        run: node scripts/set-release-version.mjs "${{ steps.version.outputs.version }}" --check
+      - name: Publish development package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          tag="v$VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add burrow.mod.json package.json package-lock.json
+          git diff --cached --quiet || git commit -m "Release Burrow Backdoor $VERSION"
+          git push origin HEAD:main
+          git tag "$tag"
+          git push origin "$tag"
+          gh release create "$tag" \
+            --title "Burrow Backdoor $VERSION (development)" \
+            --notes "NightShaman development package $VERSION from source $(git rev-parse HEAD). Complete Backdoor/Core validation and public promotion run separately."
