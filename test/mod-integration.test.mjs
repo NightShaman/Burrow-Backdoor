@@ -27,7 +27,17 @@ test('actual Core loads Backdoor with caller-scoped diagnostics and independentl
   const modRoot = path.join(root, 'mods', 'burrow-backdoor');
   await mkdir(modRoot, { recursive: true });
   for (const entry of ['burrow.mod.json', 'src', 'ui']) await cp(new URL(`../${entry}`, import.meta.url), path.join(modRoot, entry), { recursive: true });
-  const settings = new Map([['globalAgentIds', ['diagnostic']], ['adminAgentIds', ['admin']]]);
+  const settings = new Map([['unrelated', { preserved: true }]]);
+  const diagnosticAgentIds = ['diagnostic'];
+  const adminAgentIds = ['admin'];
+  const modAuthority = {
+    read: async () => ({ grants: ['mod-management-v1'], adminAgentIds, diagnosticAgentIds }),
+    allowed: async (_modId, capability, agentId) => capability === 'diagnostics-global' && diagnosticAgentIds.includes(agentId),
+    assertAllowed: async (_modId, capability, agentId) => {
+      if (capability === 'mod-management-v1' && adminAgentIds.includes(agentId)) return;
+      throw new Error('mod_authority_forbidden');
+    },
+  };
   const diagnosticCalls = [];
   const managementCalls = [];
   const mods = await loadMods({
@@ -47,6 +57,7 @@ test('actual Core loads Backdoor with caller-scoped diagnostics and independentl
     },
     runtimeDiagnostics: { read: async (input, options) => (diagnosticCalls.push({ input, options }), { effectiveAgentId: input.agentId || options.caller.agentId, global: options.global }) },
     modManagement: managementFixture(managementCalls),
+    modAuthority,
     logger: { warn() {}, error() {} },
   });
   t.after(async () => { await cleanupMods(mods); await rm(root, { recursive: true, force: true }); });
@@ -113,21 +124,14 @@ test('actual Core loads Backdoor with caller-scoped diagnostics and independentl
   assert.ok(managementCalls.every(({ options }) => options.ownerModId === 'burrow-backdoor' && options.caller.agentId === 'admin'));
   await Promise.all(managementCalls.map(({ options }) => options.waitForCaller));
 
+  assert.deepEqual(mod.routes, []);
   const replies = [];
-  let putBody = { globalAgentIds: ['one'], adminAgentIds: ['admin'] };
-  const route = createModRoute({ mods, readJsonBody: async () => putBody, sendJson: (_res, status, body) => replies.push({ status, body }) });
-  await route({ req: { method: 'GET', headers: {}, burrowVerifiedAuth: { enabled: true, authenticated: false } }, res: {}, url: new URL('http://fixture/api/mods/burrow-backdoor/access') });
-  assert.equal(replies.at(-1).status, 401);
-  await route({ req: { method: 'PUT', headers: {}, burrowVerifiedAuth: { enabled: true, authenticated: true } }, res: {}, url: new URL('http://fixture/api/mods/burrow-backdoor/access') });
-  assert.deepEqual(replies.at(-1), { status: 200, body: putBody });
-  assert.deepEqual(settings.get('globalAgentIds'), ['one']);
-  assert.deepEqual(settings.get('adminAgentIds'), ['admin']);
-
-  putBody = { globalAgentIds: ['diagnostic'], adminAgentIds: ['one'] };
-  await route({ req: { method: 'PUT', headers: {}, burrowVerifiedAuth: { enabled: false, authenticated: false } }, res: {}, url: new URL('http://fixture/api/mods/burrow-backdoor/access') });
-  assert.deepEqual(replies.at(-1), { status: 200, body: putBody });
-  assert.deepEqual(settings.get('globalAgentIds'), ['diagnostic']);
-  assert.deepEqual(settings.get('adminAgentIds'), ['one']);
+  const route = createModRoute({ mods, readJsonBody: async () => assert.fail('removed access route must not read a body'), sendJson: (_res, status, body) => replies.push({ status, body }) });
+  for (const method of ['GET', 'PUT']) {
+    await route({ req: { method, headers: {}, burrowVerifiedAuth: { enabled: true, authenticated: true } }, res: {}, url: new URL('http://fixture/api/mods/burrow-backdoor/access') });
+    assert.deepEqual(replies.at(-1), { status: 404, body: { ok: false, error: 'mod_route_not_found' } });
+  }
+  assert.deepEqual([...settings], [['unrelated', { preserved: true }]]);
 });
 
 test('Backdoor refuses activation when its manifest omits the management declaration', { skip: !existsSync(runtimePath) && `Burrow Core checkout unavailable at ${core}` }, async (t) => {
@@ -141,7 +145,7 @@ test('Backdoor refuses activation when its manifest omits the management declara
   delete manifest.system;
   delete manifest.systemCapabilities;
   await (await import('node:fs/promises')).writeFile(path.join(modRoot, 'burrow.mod.json'), JSON.stringify(manifest));
-  const mods = await loadMods({ runtimeRoot: root, enabledModIds: async () => ['burrow-backdoor'], modStoreFactory: async () => ({ get: async (_name, fallback) => fallback, close: async () => {} }), modCatalogWriter: async () => {}, resolveAgentRuntime: async () => ({}), stores: { agents: {}, models: {}, scheduledJobs: {}, conversations: {} }, logger: { warn() {}, error() {} } });
+  const mods = await loadMods({ runtimeRoot: root, enabledModIds: async () => ['burrow-backdoor'], modStoreFactory: async () => ({ get: async (_name, fallback) => fallback, close: async () => {} }), modCatalogWriter: async () => {}, resolveAgentRuntime: async () => ({}), stores: { agents: {}, models: {}, scheduledJobs: {}, conversations: {} }, modAuthority: { read: async () => ({ grants: ['mod-management-v1'] }) }, logger: { warn() {}, error() {} } });
   t.after(async () => { await cleanupMods(mods); await rm(root, { recursive: true, force: true }); });
   assert.equal(mods[0].status, 'failed');
   assert.match(mods[0].error, /mod_management_capability_required/);

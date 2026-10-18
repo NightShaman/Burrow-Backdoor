@@ -51,33 +51,8 @@ const managementTools = [
   ['burrow_get_mod_operation','Inspect one durable Backdoor-submitted lifecycle operation. Requires Backdoor administrative access.',object({operationId},['operationId']), (args) => args.context.modManagement.operation(args.input.operationId)],
 ];
 
-const auth = (request) => {
-  if (request.auth?.enabled && !request.auth?.authenticated) throw Object.assign(new Error('operator_authentication_required'), { statusCode: 401 });
-};
-const normalizeIds = (value, error = 'invalid_agent_ids') => {
-  if (!Array.isArray(value) || value.some((id) => typeof id !== 'string' || !id.trim())) throw Object.assign(new Error(error), { statusCode: 400 });
-  return [...new Set(value.map((id) => id.trim()))];
-};
-
 export function activate(context) {
   if (!context.modManagement) throw new Error('mod_management_capability_required');
-  context.api.get('/access', async (request) => {
-    auth(request);
-    return {
-      globalAgentIds: normalizeIds(await context.settings.get('globalAgentIds', []), 'invalid_global_agent_ids'),
-      adminAgentIds: normalizeIds(await context.settings.get('adminAgentIds', []), 'invalid_admin_agent_ids'),
-    };
-  });
-  context.api.put('/access', async (request) => {
-    auth(request);
-    const globalAgentIds = normalizeIds(request.body?.globalAgentIds, 'invalid_global_agent_ids');
-    const adminAgentIds = normalizeIds(request.body?.adminAgentIds, 'invalid_admin_agent_ids');
-    const known = new Set((await context.agents.list()).map((entry) => entry.id));
-    if ([...globalAgentIds, ...adminAgentIds].some((id) => !known.has(id))) throw Object.assign(new Error('unknown_agent_id'), { statusCode: 400 });
-    await context.settings.set('globalAgentIds', globalAgentIds);
-    await context.settings.set('adminAgentIds', adminAgentIds);
-    return { globalAgentIds, adminAgentIds };
-  });
   for (const [name, description, inputSchema, operation] of diagnosticTools) context.tools.register({
     name, description, inputSchema, availability: 'mod-authorized',
     handler: (argumentsValue, caller) => context.runtimeDiagnostics.read({ ...allowlisted(argumentsValue, inputSchema), operation }, { signal: caller.signal }),

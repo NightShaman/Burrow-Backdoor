@@ -16,7 +16,7 @@ Backdoor is a **system mod** because it requests a privileged Core application i
 2. Add the Backdoor repository as a mod source.
 3. Refresh the source and install **Burrow Backdoor**.
 4. Explicitly enable the mod. Newly installed mods remain disabled by design.
-5. Open **Settings → Burrow Backdoor → Agent access** and assign any administrative agents deliberately.
+5. Open **Settings → Burrow Backdoor → Admin Access**, explicitly approve Backdoor mod management, and assign administrative agents deliberately. Use **Global Access** separately for cross-agent diagnostics.
 
 Once enabled, Burrow registers **Mod: Burrow Backdoor** with 26 diagnostic tools and 8 administrative tools. They are globally discoverable mod-authorized tools, but Core still authorizes every call from its trusted caller identity.
 
@@ -24,17 +24,17 @@ Backdoor requires a Core version that supports the declared `mod-management-v1` 
 
 ## Access model
 
-Backdoor has two independent operator-managed access lists.
+Core owns Backdoor's capability grants and two independent operator-managed access lists. Backdoor neither persists nor mutates this authority in mod settings.
 
 ### Global diagnostic access
 
-Every agent can inspect its own sessions, runs, traces, context, saved-memory metadata, and other agent-owned diagnostic records. Agents in `globalAgentIds` can also inspect other agents and installation-wide records such as Forge and mod jobs. Model-supplied `agentId` values never establish authority.
+Every agent can inspect its own sessions, runs, traces, context, saved-memory metadata, and other agent-owned diagnostic records. Agents in Core's `diagnosticAgentIds` assignment for Backdoor can also inspect other agents and installation-wide records such as Forge and mod jobs. Model-supplied `agentId` values never establish authority.
 
 ### Burrow administrative access
 
-Only agents in `adminAgentIds` can use mod-management tools. Diagnostic global access does not imply administrative access, and administrative access does not imply global diagnostics. Core checks membership using the owner mod's settings and trusted active tool caller on every management request.
+Only agents in Core's `adminAgentIds` assignment can use mod-management tools, and only while Core has granted Backdoor its declared `mod-management-v1` capability. Diagnostic global access does not imply administrative access, and administrative access does not imply global diagnostics. Core checks its own authority record and the trusted active tool caller on every management request.
 
-The Settings UI/API that changes these assignments follows normal operator authentication. Internal agent tool calls do not depend on browser cookies, Basic Auth, OIDC, bearer tokens, or the selected Node Goblin target.
+The Settings panels use Core's authenticated `GET` / `PUT /api/operator/mods/burrow-backdoor/access` contract. PUT is a complete replacement, so each panel refreshes immediately before saving and preserves the other panel's assignments and unrelated grants. Newly granted host capabilities require a Core restart; revocations are checked at Core admission. Internal agent tool calls do not depend on browser cookies, Basic Auth, OIDC, bearer tokens, or the selected Node Goblin target.
 
 ## Diagnostic tools
 
@@ -79,7 +79,7 @@ Backdoor cannot add or remove sources and cannot receive source URLs, GitHub tok
 ## Security boundary
 
 - Core supplies caller agent/session/conversation/run identity; tool arguments cannot impersonate it.
-- Diagnostic `globalAgentIds` and administrative `adminAgentIds` are separate.
+- Core-owned diagnostic `diagnosticAgentIds` and administrative `adminAgentIds` assignments are separate.
 - The mod receives only `context.runtimeDiagnostics.read` and its declared `context.modManagement` facade for these operations.
 - Lifecycle work reuses Core's mod-distribution validation, recovery journals, source authentication, transitions, and persisted operation records.
 - Backdoor does not receive model/database/source credentials or direct filesystem/process access.
@@ -89,7 +89,7 @@ Backdoor cannot add or remove sources and cannot receive source URLs, GitHub tok
 
 ## Configuration
 
-Backdoor has no service URL, bearer token, listener, container, or proxy configuration. Its settings are the operator-managed global-diagnostic and Burrow-administrator agent lists. Disabling the mod preserves those settings for re-enable.
+Backdoor has no service URL, bearer token, listener, container, proxy configuration, or mod-owned access settings. Core persists Backdoor's capability grants and operator-managed diagnostic and administrative assignments independently of the mod lifecycle.
 
 ## Development
 
@@ -102,6 +102,6 @@ npm run check
 
 The mod manifest is `burrow.mod.json`; the server entry is `src/mod.mjs`; the operator settings UI is `ui/settings.js`. Core integration tests run against the sibling Burrow Backend checkout when available. Set `BURROW_CORE_ROOT=/absolute/path/to/Burrow-Backend` to select an explicit checkout. Missing Core is a failure when that variable or `CI` is set; only automatic local discovery may skip. CI checks out `NightShaman/Burrow-Backend` main into `.core/Burrow-Backend` and installs its dependencies before testing. If Core is private, configure `BURROW_CORE_READ_TOKEN` with read access to it (the default GitHub token cannot read another private repository).
 
-Access-list saves currently use two independent Core settings writes. Core exposes no generic multi-key transaction/update capability, so a storage failure between writes can leave a partial update; no broad Core mechanism is introduced here. The lists cannot simply be consolidated in the mod because Core independently reads the existing keys for authorization.
+The settings host must inject Backdoor's Core-owned access adapter rather than route these requests through the mod-owned `/api/mods/:modId/*` namespace. This preserves normal local operator authentication and keeps arbitrary Core API access out of the mod settings contract.
 
 Releases use UTC calendar versions (`YYYY.MM.DD[.N]`). GitHub Actions assigns the next available revision on `main`, synchronizes the manifest/package release identity, tags it, and publishes the GitHub release.

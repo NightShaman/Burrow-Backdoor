@@ -16,7 +16,7 @@
         "id": "burrow-backdoor",
         "navigation": {
           "title": "Burrow Backdoor",
-          "description": "Assign global diagnostic and Burrow administrative access."
+          "description": "Manage Core-owned diagnostic and administrative access for Backdoor."
         },
         "primary": {
           "title": "Burrow Backdoor",

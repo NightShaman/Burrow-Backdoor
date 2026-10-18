@@ -7,7 +7,6 @@ test('direct handlers only forward advertised fields and retain fixed operation/
   const diagnostics = [];
   const management = [];
   activate({
-    api: { get() {}, put() {} },
     tools: { register: tool => tools.set(tool.name, tool) },
     runtimeDiagnostics: { read: async input => diagnostics.push(input) },
     modManagement: Object.fromEntries(['inventory', 'submit', 'refresh', 'operation'].map(method => [method, async input => management.push({ method, input })])),
