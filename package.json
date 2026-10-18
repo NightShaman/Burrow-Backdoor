@@ -6,7 +6,7 @@
   "description": "System mod for agent diagnostics and controlled administration of the home Burrow",
   "license": "UNLICENSED",
   "scripts": {
-    "test": "node --test",
-    "check": "node --check src/*.mjs && node --test"
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check src/*.mjs && node --test test/*.test.mjs"
   }
 }

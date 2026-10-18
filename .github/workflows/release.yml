@@ -15,14 +15,27 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      BURROW_CORE_ROOT: ${{ github.workspace }}/.core/Burrow-Backend
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
+      - name: Checkout required Core integration target
+        uses: actions/checkout@v4
+        with:
+          repository: NightShaman/Burrow-Backend
+          ref: main
+          path: .core/Burrow-Backend
+          token: ${{ secrets.BURROW_CORE_READ_TOKEN || github.token }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Install Core integration dependencies
+        working-directory: .core/Burrow-Backend
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Assign calendar version
         id: version
         run: |

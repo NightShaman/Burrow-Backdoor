@@ -1,4 +1,6 @@
 const object = (properties = {}, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
+// Construct capability inputs from the advertised properties, even for direct handler calls.
+const allowlisted = (input, schema) => Object.fromEntries(Object.keys(schema.properties).filter((key) => Object.hasOwn(input || {}, key)).map((key) => [key, input[key]]));
 const string = (extra = {}) => ({ type: 'string', ...extra });
 const integer = (maximum, minimum = 1) => ({ type: 'integer', minimum, ...(maximum ? { maximum } : {}) });
 const boolean = { type: 'boolean' };
@@ -32,7 +34,7 @@ const diagnosticTools = [
   ['burrow_list_traces','List a bounded page of trace runs for an authorized agent session.',object({agentId:agent,sessionId:session,limit:integer(100),cursor:string({minLength:1})}), 'traces'],
   ['burrow_get_trace','Read a summarized trace for an authorized agent; tool output is omitted by default.',object({runId:string({minLength:1}),agentId:agent,sessionId:session,includeToolOutput:boolean},['runId']), 'trace'],
   ['burrow_get_trace_authority','Explain authority evidence for one authorized trace.',object({runId:string({minLength:1}),agentId:agent,sessionId:session},['runId']), 'trace-authority'],
-  ['burrow_list_run_proofs','List archived runtime proofs for an authorized agent/session.',object({agentId:agent,sessionId:session,limit:integer(200)}), 'run-proofs'],
+  ['burrow_list_run_proofs','List archived runtime proofs for an authorized agent/session.',object({agentId:agent,sessionId:session,limit:integer(200),cursor:string({minLength:1})}), 'run-proofs'],
   ['burrow_get_run_proof','Read one archived runtime proof for an authorized agent.',object({runId:string({minLength:1}),agentId:agent},['runId']), 'run-proof'],
   ['burrow_get_session_context','Read a scalar context-composition summary for an authorized agent session; transcript and evidence bodies are excluded.',object({agentId:agent,sessionId:session}), 'session-context'],
   ['burrow_context_status','Read bounded context-window, live usage and compression status for an authorized agent session.',object({agentId:agent,sessionId:session}), 'context-status'],
@@ -41,8 +43,8 @@ const diagnosticTools = [
 const managementTools = [
   ['burrow_mod_management_inventory','List sanitized configured sources and installable/installed mods. Requires Backdoor administrative access.',object({offset:integer(Number.MAX_SAFE_INTEGER, 0),limit:integer(100)}), (args) => args.context.modManagement.inventory(args.input)],
   ['burrow_refresh_mod_sources','Queue a durable refresh of configured mod sources. Requires Backdoor administrative access.',object(), (args) => args.context.modManagement.refresh()],
-  ['burrow_install_mod','Queue a durable mod installation through Core. Requires Backdoor administrative access.',object({modId,version},['modId']), (args) => args.context.modManagement.submit({ action: 'install', ...args.input })],
-  ['burrow_update_mod','Queue a durable mod update through Core. Requires Backdoor administrative access.',object({modId,version},['modId']), (args) => args.context.modManagement.submit({ action: 'update', ...args.input })],
+  ['burrow_install_mod','Queue a durable mod installation through Core. Requires Backdoor administrative access.',object({modId,version},['modId']), (args) => args.context.modManagement.submit({ action: 'install', modId: args.input.modId, ...(args.input.version !== undefined ? { version: args.input.version } : {}) })],
+  ['burrow_update_mod','Queue a durable mod update through Core. Requires Backdoor administrative access.',object({modId,version},['modId']), (args) => args.context.modManagement.submit({ action: 'update', modId: args.input.modId, ...(args.input.version !== undefined ? { version: args.input.version } : {}) })],
   ['burrow_enable_mod','Queue a durable mod enable operation through Core. Requires Backdoor administrative access.',object({modId},['modId']), (args) => args.context.modManagement.submit({ action: 'enable', modId: args.input.modId })],
   ['burrow_disable_mod','Queue a durable mod disable operation through Core. Requires Backdoor administrative access.',object({modId},['modId']), (args) => args.context.modManagement.submit({ action: 'disable', modId: args.input.modId })],
   ['burrow_uninstall_mod','Queue a durable mod uninstall operation through Core. Requires Backdoor administrative access.',object({modId},['modId']), (args) => args.context.modManagement.submit({ action: 'uninstall', modId: args.input.modId })],
@@ -78,10 +80,10 @@ export function activate(context) {
   });
   for (const [name, description, inputSchema, operation] of diagnosticTools) context.tools.register({
     name, description, inputSchema, availability: 'mod-authorized',
-    handler: (argumentsValue, caller) => context.runtimeDiagnostics.read({ operation, ...(argumentsValue || {}) }, { signal: caller.signal }),
+    handler: (argumentsValue, caller) => context.runtimeDiagnostics.read({ ...allowlisted(argumentsValue, inputSchema), operation }, { signal: caller.signal }),
   });
   for (const [name, description, inputSchema, invoke] of managementTools) context.tools.register({
     name, description, inputSchema, availability: 'mod-authorized',
-    handler: (input = {}) => invoke({ context, input }),
+    handler: (input = {}) => invoke({ context, input: allowlisted(input, inputSchema) }),
   });
 }

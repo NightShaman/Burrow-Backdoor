@@ -100,6 +100,8 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 ```
 
-The mod manifest is `burrow.mod.json`; the server entry is `src/mod.mjs`; the operator settings UI is `ui/settings.js`. Core integration tests run against the sibling Burrow Backend checkout when available.
+The mod manifest is `burrow.mod.json`; the server entry is `src/mod.mjs`; the operator settings UI is `ui/settings.js`. Core integration tests run against the sibling Burrow Backend checkout when available. Set `BURROW_CORE_ROOT=/absolute/path/to/Burrow-Backend` to select an explicit checkout. Missing Core is a failure when that variable or `CI` is set; only automatic local discovery may skip. CI checks out `NightShaman/Burrow-Backend` main into `.core/Burrow-Backend` and installs its dependencies before testing. If Core is private, configure `BURROW_CORE_READ_TOKEN` with read access to it (the default GitHub token cannot read another private repository).
+
+Access-list saves currently use two independent Core settings writes. Core exposes no generic multi-key transaction/update capability, so a storage failure between writes can leave a partial update; no broad Core mechanism is introduced here. The lists cannot simply be consolidated in the mod because Core independently reads the existing keys for authorization.
 
 Releases use UTC calendar versions (`YYYY.MM.DD[.N]`). GitHub Actions assigns the next available revision on `main`, synchronizes the manifest/package release identity, tags it, and publishes the GitHub release.

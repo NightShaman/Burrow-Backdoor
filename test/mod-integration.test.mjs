@@ -8,6 +8,10 @@ import { fileURLToPath } from 'node:url';
 
 const core = path.resolve(process.env.BURROW_CORE_ROOT || fileURLToPath(new URL('../../../Burrow-HC/Burrow-Backend/', import.meta.url)));
 const runtimePath = path.join(core, 'src', 'mod-runtime.mjs');
+// Explicit paths and CI are contracts, not optional local discovery.
+if (!existsSync(runtimePath) && (process.env.CI || process.env.BURROW_CORE_ROOT)) {
+  throw new Error(`Required Burrow Core checkout unavailable at ${core}`);
+}
 
 function managementFixture(calls) {
   return Object.fromEntries(['inventory', 'submit', 'operation'].map(method => [method, async (input, options) => {
@@ -56,6 +60,27 @@ test('actual Core loads Backdoor with caller-scoped diagnostics and independentl
   assert.deepEqual(await mod.host.invokeTool('burrow_list_sessions', {}, { agentId: 'one', sessionId: 'own' }), { effectiveAgentId: 'one', global: false });
   assert.deepEqual(await mod.host.invokeTool('burrow_list_sessions', { agentId: 'two' }, { agentId: 'diagnostic', sessionId: 'own' }), { effectiveAgentId: 'two', global: true });
   assert.deepEqual(diagnosticCalls.map(({ options }) => [options.caller.agentId, options.global]), [['one', false], ['diagnostic', true]]);
+
+  // Host schema validation rejects before any diagnostic or distribution capability runs.
+  for (const [tool, input] of [
+    ['burrow_inventory', { operation: 'trace', runId: 'other' }],
+    ['burrow_list_sessions', { limit: '10' }],
+    ['burrow_list_sessions', { limit: 201 }],
+    ['burrow_get_trace', {}],
+    ['burrow_install_mod', { modId: 'fixture', action: 'uninstall' }],
+    ['burrow_update_mod', { modId: 'fixture', action: 'install' }],
+    ['burrow_install_mod', { modId: 'fixture', version: 'not-a-version' }],
+    ['burrow_mod_management_inventory', { limit: -1 }],
+    ['burrow_get_mod_operation', { operationId: 'not-a-uuid' }],
+  ]) {
+    const before = [diagnosticCalls.length, managementCalls.length];
+    await assert.rejects(mod.host.invokeTool(tool, input, { agentId: 'admin', sessionId: 'own' }), (error) => error.statusCode === 400, tool);
+    assert.deepEqual([diagnosticCalls.length, managementCalls.length], before, tool);
+  }
+  const cursor = 'opaque-proof-cursor';
+  await mod.host.invokeTool('burrow_list_run_proofs', { limit: 2, cursor }, { agentId: 'one', sessionId: 'own' });
+  assert.deepEqual(diagnosticCalls.at(-1).input, { operation: 'run-proofs', limit: 2, cursor });
+
 
   await assert.rejects(mod.host.invokeTool('burrow_mod_management_inventory', {}, { agentId: 'diagnostic', sessionId: 'own' }), /mod_route_failed/);
   assert.equal(managementCalls.length, 0);
