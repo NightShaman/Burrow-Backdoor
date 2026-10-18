@@ -3,7 +3,7 @@
   "version": "2026.10.17",
   "private": false,
   "type": "module",
-  "description": "Read-only diagnostic mod for Burrow",
+  "description": "System mod for agent diagnostics and controlled administration of the home Burrow",
   "license": "UNLICENSED",
   "scripts": {
     "test": "node --test",

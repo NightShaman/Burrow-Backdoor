@@ -2,6 +2,10 @@
   "id": "burrow-backdoor",
   "name": "Burrow Backdoor",
   "version": "2026.10.17",
+  "system": true,
+  "systemCapabilities": [
+    "mod-management-v1"
+  ],
   "server": "src/mod.mjs",
   "ui": {
     "settings": "ui/settings.js"
