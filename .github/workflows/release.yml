@@ -1,27 +1,25 @@
-name: Release Burrow Backdoor
+name: Verify Burrow Backdoor
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: burrow-backdoor-release
-  cancel-in-progress: false
+  group: burrow-backdoor-verify-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  release:
+  verify:
     runs-on: ubuntu-latest
     env:
       BURROW_CORE_ROOT: ${{ github.workspace }}/.core/Burrow-Backend
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
       - name: Checkout required Core integration target
         uses: actions/checkout@v4
         with:
@@ -36,39 +34,7 @@ jobs:
       - name: Install Core integration dependencies
         working-directory: .core/Burrow-Backend
         run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Assign calendar version
-        id: version
+      - name: Verify source
         run: |
-          set -eu
-          base=$(date -u +%Y.%m.%d)
-          version=$base
-          suffix=0
-          while git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null 2>&1; do
-            suffix=$((suffix + 1))
-            version="$base.$suffix"
-          done
-          node scripts/set-release-version.mjs "$version"
-          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
-      - name: Verify release
-        run: |
-          set -eu
           npm ci --ignore-scripts --no-audit --no-fund
           npm run check
-          node scripts/set-release-version.mjs "${{ steps.version.outputs.version }}" --check
-      - name: Publish release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          set -eu
-          tag="v$VERSION"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add burrow.mod.json package.json package-lock.json
-          git diff --cached --quiet || git commit -m "Release Burrow Backdoor $VERSION"
-          git push origin HEAD:main
-          git tag "$tag"
-          git push origin "$tag"
-          gh release create "$tag" \
-            --title "Burrow Backdoor $VERSION" \
-            --notes "Calendar-versioned Burrow Backdoor release $VERSION from source $(git rev-parse HEAD)."

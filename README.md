@@ -104,4 +104,4 @@ The mod manifest is `burrow.mod.json`; the server entry is `src/mod.mjs`; the op
 
 The settings host must inject Backdoor's Core-owned access adapter rather than route these requests through the mod-owned `/api/mods/:modId/*` namespace. This preserves normal local operator authentication and keeps arbitrary Core API access out of the mod settings contract.
 
-Releases use UTC calendar versions (`YYYY.MM.DD[.N]`). GitHub Actions assigns the next available revision on `main`, synchronizes the manifest/package release identity, tags it, and publishes the GitHub release.
+NightShaman `main` runs source verification only. The coordinated daily Burrow promotion freezes Backdoor with its compatible Core revision, runs the full Backdoor/Core checks, stamps the public UTC `YYYY.MM.DD` version, and publishes the allowlisted snapshot and release to `GoblinKing-Burrow/Burrow-Backdoor`. Changes after that day's public release wait for the next UTC day.
