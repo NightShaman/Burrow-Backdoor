@@ -105,7 +105,7 @@ test('actual Core loads Backdoor with caller-scoped diagnostics and independentl
   assert.deepEqual(settings.get('adminAgentIds'), ['one']);
 });
 
-test('Backdoor refuses activation when its manifest omits the management declaration', async (t) => {
+test('Backdoor refuses activation when its manifest omits the management declaration', { skip: !existsSync(runtimePath) && `Burrow Core checkout unavailable at ${core}` }, async (t) => {
   const { loadMods, cleanupMods } = await import(runtimePath);
   const root = await mkdtemp(path.join(os.tmpdir(), 'backdoor-no-management-'));
   const modRoot = path.join(root, 'mods', 'burrow-backdoor');
