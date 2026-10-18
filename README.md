@@ -2,7 +2,7 @@
   <img src="docs/assets/hero.png" alt="Burrow Backdoor — agent diagnostics and administration for the home Burrow" width="720" />
 </p>
 
-# Burrow Backdoor [Burrow System Mod]
+# Burrow Backdoor [Burrow Mod]
 
 *Sometimes we have to enter from the rear.*
 
