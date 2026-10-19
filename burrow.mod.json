@@ -6,6 +6,13 @@
   "systemCapabilities": [
     "mod-management-v1"
   ],
+  "managedSkills": [
+    {
+      "id": "burrow-backdoor",
+      "repository": "https://github.com/GoblinKing-Burrow/Burrow-Skills.git",
+      "path": "burrow-backdoor"
+    }
+  ],
   "server": "src/mod.mjs",
   "ui": {
     "settings": "ui/settings.js"
