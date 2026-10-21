@@ -24,7 +24,7 @@ Unavailable agent assignments remain visible so operators can deliberately retai
 
 Core supplies the active agent, session, conversation, and run identity. This identity determines authorization and is recorded on management operations. The agent cannot impersonate another caller through tool arguments. Browser cookies, operator login, bearer tokens, and Node Goblin target selection are not the authority source for internal agent tool calls.
 
-The Settings page itself uses the operator’s authenticated Core access API. See the [operator API reference](operator-api.md).
+The Settings page itself uses Core’s operator access API and follows Core’s configured authentication mode on builds containing the mod-access authentication fix. API tokens do not grant operator access. See the [operator API reference](operator-api.md).
 
 ## Shared agent directory
 

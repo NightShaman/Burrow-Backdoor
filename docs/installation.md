@@ -4,7 +4,7 @@
 
 Use a compatible Burrow Core with the `mod-management-v1` system capability and the Core-owned mod access settings adapter. Backdoor fails activation on an unsupported capability contract; it does not silently fall back to a weaker one. Keep Core and Backdoor on compatible releases.
 
-The access settings require a verified operator login, including when Core runs with `authMode: none`; API tokens cannot authorize this operator route.
+On Core builds containing the mod-access authentication fix, the access settings follow Core’s configured authentication mode: a verified operator login is required when authentication is enabled; with `authMode: none`, direct UI access does not require a separate login. API tokens still cannot authorize this operator route. Older Core builds reject access with authentication disabled; see [settings troubleshooting](troubleshooting.md#settings-say-access-is-unavailable).
 
 ## Install from Settings
 
@@ -27,3 +27,9 @@ For an assigned administrator, `burrow_mod_management_inventory` verifies admini
 There is no Backdoor service URL, bearer token, proxy, listener, or mod-owned access configuration. Core owns grants and agent assignments independently of the mod lifecycle. The manifest identifies the mod as `burrow-backdoor`, declares `system: true`, and requests `mod-management-v1`.
 
 Use normal **Settings → Mods** update, disable, and uninstall actions, or use the [administrative tools](administration.md) from an authorized agent. System-mod status does not make Backdoor bundled, always enabled, or non-removable.
+
+## Automatic operating skill
+
+On compatible Core and mod builds that declare managed skills, loading this mod automatically supplies the `burrow-backdoor` skill from [Burrow-Skills](https://github.com/GoblinKing-Burrow/Burrow-Skills/tree/main/burrow-backdoor). Core maintains the installed copy as read-only and refreshes managed skills at startup, on mod lifecycle changes, and on its default six-hour schedule. You do not paste, edit, or assign that managed copy manually. The skill provides instructions; it does not grant tool or data access.
+
+The public **2026.10.19** mod snapshot does not yet declare this managed skill. Automatic mod-managed delivery requires both the newer manifest and a Core build that supports it; updating only the skill repository cannot add the missing integration. See [how managed skills work](https://burrow-docs.blissful-psychosis.com/burrow-skills/managed-skills/).

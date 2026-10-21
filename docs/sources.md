@@ -1,6 +1,6 @@
 # Sources and development
 
-These guides describe the current public Backdoor tool and settings contracts. Tool schemas are derived from the implementation; Core remains responsible for authorization, diagnostic sanitization, distribution, and operation persistence.
+These guides describe Backdoor’s tool and settings contracts, with build-specific notes for Core behavior. Tool schemas are derived from the implementation; Core remains responsible for authorization, diagnostic sanitization, distribution, and operation persistence.
 
 | Contract | Public source |
 | --- | --- |
@@ -11,6 +11,8 @@ These guides describe the current public Backdoor tool and settings contracts. T
 | Core behavior | [Burrow Backend](https://github.com/GoblinKing-Burrow/Burrow/tree/main/backend) |
 
 ## Versions
+
+The no-auth settings behavior documented here requires a Core build containing the mod-access authentication fix. The public 2026.10.19 runtime predates that fix; see [settings troubleshooting](troubleshooting.md#settings-say-access-is-unavailable).
 
 Public release versions use UTC `YYYY.MM.DD`. Use compatible Core and Backdoor releases. Tool schemas also accept valid calendar revisions and semantic version strings as an explicit version guard, but Core requires a match to the source’s currently inspected latest version.
 
@@ -34,3 +36,13 @@ python scripts/docs/check_site.py site
 ```
 
 The public site uses MkDocs Material. Documentation CI builds and checks links before deployment. The source and [license](https://github.com/GoblinKing-Burrow/Burrow-Backdoor/blob/main/LICENSE) are available in the public repository.
+
+## Review checkpoint: 21 October 2026
+
+All pages in this section were reconciled from the [2026.10.19 runtime baseline](https://github.com/GoblinKing-Burrow/Burrow-Backdoor/tree/02aef71e99bd54b4ee635251ab4496720cd4f5fa) through [public source `381b6f5`](https://github.com/GoblinKing-Burrow/Burrow-Backdoor/tree/381b6f50e545063e2a4434c1f56658f8b7d6d7f0). The public runtime implementation is unchanged across that interval; documentation changes do not imply a new runtime release. Core-dependent and forthcoming managed-skill behavior is identified separately in the relevant guides.
+
+The original guides named the release line but did not pin every page to a commit. This review uses the published release snapshot and repository history as the baseline, rather than assuming an undocumented per-page source revision.
+
+### Public-snapshot test limitation
+
+The 2026.10.19 public snapshot includes `test/development-release-workflow.test.mjs` but excludes the development release workflow it reads. The aggregate `npm run check` therefore fails with a missing workflow file even when the mod's focused tests pass. Report that separately from runtime behavior. Core integration additionally requires the compatible Core checkout and dependencies described above; skipped integration cases do not establish compatibility.

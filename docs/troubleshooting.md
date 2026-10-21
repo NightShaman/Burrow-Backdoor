@@ -14,7 +14,11 @@ Confirm the calling agent is in **Admin Access** and **Approve Backdoor mod mana
 
 ## Settings say access is unavailable
 
-The settings host must support the Core-owned access adapter. Update to a compatible UI/Core pair if it reports that Core-owned mod access is unsupported. Use a verified operator login even with `authMode: none`; API tokens are rejected for the access-settings route. Do not work around this by adding credentials to agent arguments or editing mod-owned settings.
+The settings host must support the Core-owned access adapter. Update to a compatible UI/Core pair if it reports that Core-owned mod access is unsupported.
+
+On Core builds containing the mod-access authentication fix, use a verified operator login when authentication is enabled. With `authMode: none`, direct UI access does not require a separate login. API tokens are still rejected for the access-settings route.
+
+If `operator_authentication_required` appears with authentication disabled, check the running Core build. Older builds, including the public 2026.10.19 runtime, have a login gate that rejects this configuration. Use a compatible Core build containing the fix when available; updating Backdoor alone does not change this Core-owned route. Do not work around this by adding credentials to agent arguments or editing mod-owned settings.
 
 ## Operation stays queued or running
 
