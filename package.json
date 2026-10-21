@@ -1,6 +1,6 @@
 {
   "name": "burrow-backdoor",
-  "version": "2026.10.19.2",
+  "version": "2026.10.21",
   "private": false,
   "type": "module",
   "description": "System mod for agent diagnostics and controlled administration of the home Burrow",
