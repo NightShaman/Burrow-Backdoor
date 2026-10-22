@@ -63,6 +63,9 @@ test('actual Core loads Backdoor with caller-scoped diagnostics and independentl
   t.after(async () => { await cleanupMods(mods); await rm(root, { recursive: true, force: true }); });
   const mod = mods[0];
   assert.equal(mod.status, 'loaded', mod.error);
+  assert.equal(mod.manifest.name, 'Backdoor');
+  assert.equal(mod.manifest.contributions.settings[0].navigation.title, 'Backdoor');
+  assert.equal(mod.manifest.contributions.settings[0].primary.title, 'Backdoor');
   assert.equal(mod.manifest.system, true);
   assert.deepEqual(mod.systemCapabilities, ['mod-management-v1']);
   assert.equal(mod.tools.length, 34);

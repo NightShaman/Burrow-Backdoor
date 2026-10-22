@@ -12,7 +12,7 @@ Global diagnostics do not grant administration. Administration does not grant gl
 
 ## Set access
 
-Open **Settings → Burrow Backdoor → Global Access**. Check the agents that should see cross-agent diagnostics, then choose **Save global access**.
+Open **Settings → Backdoor → Global Access**. Check the agents that should see cross-agent diagnostics, then choose **Save global access**.
 
 Open **Admin Access**. Check **Approve Backdoor mod management**, select trusted agents, then choose **Save admin access**. Newly granted host capabilities require a Core restart; follow the panel’s restart notice. Agent assignments and capability grants are separate parts of the authority record. The current restart flag is a save-time signal, not persistent restart tracking; see the [operator API](operator-api.md).
 

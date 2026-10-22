@@ -1,6 +1,6 @@
 {
   "id": "burrow-backdoor",
-  "name": "Burrow Backdoor",
+  "name": "Backdoor",
   "version": "2026.10.21",
   "system": true,
   "systemCapabilities": [
@@ -22,11 +22,11 @@
       {
         "id": "burrow-backdoor",
         "navigation": {
-          "title": "Burrow Backdoor",
+          "title": "Backdoor",
           "description": "Manage Core-owned diagnostic and administrative access for Backdoor."
         },
         "primary": {
-          "title": "Burrow Backdoor",
+          "title": "Backdoor",
           "capability": "settingsUi"
         }
       }

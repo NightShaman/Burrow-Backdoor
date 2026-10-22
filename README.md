@@ -16,7 +16,7 @@ Backdoor is a **system mod** because it requests a privileged Core application i
 2. Add the Backdoor repository as a mod source.
 3. Refresh the source and install **Burrow Backdoor**.
 4. Explicitly enable the mod. Newly installed mods remain disabled by design.
-5. Open **Settings → Burrow Backdoor → Admin Access**, explicitly approve Backdoor mod management, and assign administrative agents deliberately. Use **Global Access** separately for cross-agent diagnostics.
+5. Open **Settings → Backdoor → Admin Access**, explicitly approve Backdoor mod management, and assign administrative agents deliberately. Use **Global Access** separately for cross-agent diagnostics.
 
 Once enabled, Burrow registers **Mod: Burrow Backdoor** with 26 diagnostic tools and 8 administrative tools. They are globally discoverable mod-authorized tools, but Core still authorizes every call from its trusted caller identity.
 

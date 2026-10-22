@@ -12,7 +12,7 @@ On Core builds containing the mod-access authentication fix, the access settings
 2. Add `https://github.com/GoblinKing-Burrow/Burrow-Backdoor` as a mod source.
 3. Refresh the source and install **Burrow Backdoor**.
 4. Explicitly enable the mod. A fresh installation remains disabled until enabled.
-5. Open **Settings → Burrow Backdoor** to choose access. Ordinary agents can use their own diagnostics without assignment to either list.
+5. Open **Settings → Backdoor** to choose access. Ordinary agents can use their own diagnostics without assignment to either list.
 6. For administration, open **Admin Access**, select **Approve Backdoor mod management**, choose the administrative agents, and save. Restart Core when the panel reports that a newly granted host capability requires it.
 7. For cross-agent diagnostics, separately choose agents under **Global Access** and save.
 
