@@ -1,7 +1,7 @@
 {
   "id": "burrow-backdoor",
   "name": "Backdoor",
-  "version": "2026.10.21",
+  "version": "2026.10.22",
   "system": true,
   "systemCapabilities": [
     "mod-management-v1"
